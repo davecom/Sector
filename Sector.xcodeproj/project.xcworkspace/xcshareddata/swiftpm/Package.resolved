@@ -1,0 +1,15 @@
+{
+  "originHash" : "6476041fb5e813d977a963e695ba21e0acc14de27a397c7cfbc608f207f7b65e",
+  "pins" : [
+    {
+      "identity" : "hfskit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/davecom/HFSKit",
+      "state" : {
+        "branch" : "main",
+        "revision" : "b029dfb9e45914c90d9af2acda62a949ba9d35f9"
+      }
+    }
+  ],
+  "version" : 3
+}
