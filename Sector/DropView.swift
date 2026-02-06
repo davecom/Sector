@@ -24,9 +24,9 @@ class DropView: NSView {
     
     var isHighlighted: Bool = false{
         didSet {
-            dropBox.borderColor = isHighlighted ? NSColor.highlightColor : NSColor.tertiaryLabelColor
+            dropBox.borderColor = isHighlighted ? NSColor.green : NSColor.tertiaryLabelColor
             dropBox.borderWidth = isHighlighted ? 5.0 : 1.0
-            dropImageLabel.textColor = isHighlighted ? NSColor.highlightColor : NSColor.labelColor
+            dropImageLabel.textColor = isHighlighted ? NSColor.green : NSColor.labelColor
         }
     }
 

@@ -11,11 +11,75 @@ import HFSKit
 class FileController {
     private var volumeWindowControllers: [VolumeWindowController] = []
     
+    private struct HFSPartitionChoice {
+        let ordinal: Int
+        let mapIndex: Int
+        let name: String
+    }
+    
+    private func openVolume(at url: URL, partitionCandidates: [Int?]) throws -> HFSVolume {
+        var attempted: Set<String> = []
+        var lastError: Error?
+        
+        for candidate in partitionCandidates {
+            let key = candidate.map(String.init) ?? "nil"
+            if attempted.contains(key) { continue }
+            attempted.insert(key)
+            
+            do {
+                return try HFSVolume(path: url, writable: true, partition: candidate)
+            } catch {
+                lastError = error
+            }
+        }
+        
+        if let lastError {
+            throw lastError
+        }
+        throw HFSError.invalidArgument("No partition candidates available.")
+    }
+    
+    private func promptForPartitionSelection(choices: [HFSPartitionChoice],
+                                             fileName: String) -> Int? {
+        let runAlert: () -> Int? = {
+            let alert = NSAlert()
+            alert.messageText = "Choose a Partition"
+            alert.informativeText = "\"\(fileName)\" contains multiple HFS partitions. Select one to open."
+            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: "Cancel")
+            
+            let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 320, height: 24), pullsDown: false)
+            for choice in choices {
+                let displayName = choice.name.isEmpty ? "Untitled" : choice.name
+                popup.addItem(withTitle: "HFS \(choice.ordinal) (map \(choice.mapIndex)): \(displayName)")
+            }
+            popup.selectItem(at: 0)
+            alert.accessoryView = popup
+            
+            let response = alert.runModal()
+            guard response == .alertFirstButtonReturn else { return nil }
+            let selectedIndex = popup.indexOfSelectedItem
+            guard selectedIndex >= 0 && selectedIndex < choices.count else { return nil }
+            return choices[selectedIndex].ordinal
+        }
+        
+        if Thread.isMainThread {
+            return runAlert()
+        }
+        
+        var result: Int?
+        DispatchQueue.main.sync {
+            result = runAlert()
+        }
+        return result
+    }
+    
     /// Updates the canvas with a given image.
-    private func handleVolume(_ volume: HFSVolume) {
+    private func handleVolume(_ volume: HFSVolume, displayName: String) {
         
         let vwc: VolumeWindowController = NSStoryboard(name: "Main", bundle: nil).instantiateController(withIdentifier: "volumeWindowController") as! VolumeWindowController
         vwc.volume = volume
+        vwc.displayName = displayName
         vwc.configureUI()
         vwc.showWindow(self)
         
@@ -40,9 +104,42 @@ class FileController {
     /// Updates the canvas with a given image file.
     public func handleFile(at url: URL) {
         do {
-            let volume = try HFSVolume(path: url, writable: true)
+            let partitionCandidates: [Int?]
+            do {
+                let partitions = try HFSVolume.listPartitions(path: url)
+                let hfsPartitions = partitions.filter { $0.isHFS }
+                let choices = hfsPartitions.enumerated().map { offset, part in
+                    HFSPartitionChoice(ordinal: offset + 1, mapIndex: part.index, name: part.name)
+                }
+                
+                if choices.count > 1 {
+                    guard let selection = promptForPartitionSelection(
+                        choices: choices,
+                        fileName: url.lastPathComponent
+                    ) else {
+                        return
+                    }
+                    if let selectedChoice = choices.first(where: { $0.ordinal == selection }) {
+                        partitionCandidates = [selectedChoice.ordinal, selectedChoice.mapIndex, nil, 0]
+                    } else {
+                        partitionCandidates = [selection, nil, 0]
+                    }
+                } else if let onlyChoice = choices.first {
+                    // Some images behave differently; try both numbering schemes.
+                    partitionCandidates = [onlyChoice.ordinal, onlyChoice.mapIndex, nil, 0]
+                } else {
+                    // No HFS partition map entries; try automatic/raw behavior.
+                    partitionCandidates = [nil, 0]
+                }
+            } catch {
+                // If partition listing fails entirely, still attempt normal open paths.
+                partitionCandidates = [nil, 0, 1]
+            }
+            
+            let volume = try openVolume(at: url, partitionCandidates: partitionCandidates)
+            let displayName = url.deletingPathExtension().lastPathComponent
             OperationQueue.main.addOperation {
-                self.handleVolume(volume)
+                self.handleVolume(volume, displayName: displayName)
             }
         } catch let error {
             print(error)
@@ -51,5 +148,3 @@ class FileController {
     }
     
 }
-
-
