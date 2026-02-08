@@ -20,6 +20,7 @@ class VolumeWindowController: NSWindowController {
         static let importItem = NSToolbarItem.Identifier("SectorToolbarImport")
         static let exportItem = NSToolbarItem.Identifier("SectorToolbarExport")
         static let renameItem = NSToolbarItem.Identifier("SectorToolbarRename")
+        static let typeCreatorItem = NSToolbarItem.Identifier("SectorToolbarTypeCreator")
         static let deleteItem = NSToolbarItem.Identifier("SectorToolbarDelete")
     }
     
@@ -87,6 +88,7 @@ extension VolumeWindowController: NSToolbarDelegate {
             ToolbarIdentifiers.importItem,
             ToolbarIdentifiers.exportItem,
             ToolbarIdentifiers.renameItem,
+            ToolbarIdentifiers.typeCreatorItem,
             ToolbarIdentifiers.deleteItem,
             .flexibleSpace
         ]
@@ -97,6 +99,7 @@ extension VolumeWindowController: NSToolbarDelegate {
             ToolbarIdentifiers.importItem,
             ToolbarIdentifiers.exportItem,
             ToolbarIdentifiers.renameItem,
+            ToolbarIdentifiers.typeCreatorItem,
             ToolbarIdentifiers.deleteItem,
             .flexibleSpace
         ]
@@ -134,6 +137,16 @@ extension VolumeWindowController: NSToolbarDelegate {
             item.image = NSImage(systemSymbolName: "pencil", accessibilityDescription: nil)
             item.target = nil
             item.action = #selector(VolumeDataViewController.renameSelectedItem(_:))
+            return item
+            
+        case ToolbarIdentifiers.typeCreatorItem:
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.label = "Type/Creator"
+            item.paletteLabel = "Type/Creator"
+            item.toolTip = "Change Type and Creator of selected file"
+            item.image = NSImage(systemSymbolName: "tag", accessibilityDescription: nil)
+            item.target = nil
+            item.action = #selector(VolumeDataViewController.changeTypeCreatorSelectedItem(_:))
             return item
             
         case ToolbarIdentifiers.deleteItem:

@@ -17,19 +17,33 @@ private final class HFSNode {
     }
 }
 
-private protocol OutlineActionDelegate: AnyObject {
-    func outlineDeleteBackward()
-}
-
-private final class OperationOutlineView: NSOutlineView {
-    weak var actionDelegate: OutlineActionDelegate?
+private final class FourCharacterCodeDelegate: NSObject, NSTextFieldDelegate {
+    weak var okButton: NSButton?
+    weak var typeField: NSTextField?
+    weak var creatorField: NSTextField?
     
-    override func keyDown(with event: NSEvent) {
-        if event.keyCode == 51 || event.keyCode == 117 {
-            actionDelegate?.outlineDeleteBackward()
-            return
-        }
-        super.keyDown(with: event)
+    private func isValid(_ text: String) -> Bool {
+        text.count == 4
+    }
+    
+    private func refreshOKState() {
+        let validType = isValid(typeField?.stringValue ?? "")
+        let validCreator = isValid(creatorField?.stringValue ?? "")
+        okButton?.isEnabled = validType && validCreator
+    }
+    
+    func controlTextDidChange(_ obj: Notification) {
+        refreshOKState()
+    }
+    
+    func control(_ control: NSControl,
+                 textView: NSTextView,
+                 shouldChangeTextIn affectedCharRange: NSRange,
+                 replacementString: String?) -> Bool {
+        guard let textField = control as? NSTextField else { return true }
+        let current = textField.stringValue as NSString
+        let next = current.replacingCharacters(in: affectedCharRange, with: replacementString ?? "")
+        return next.count <= 4
     }
 }
 
@@ -37,23 +51,27 @@ class VolumeDataViewController: NSViewController {
     
     final var volume: HFSVolume?
     
-    @IBOutlet weak var outlineView: NSOutlineView!
+    // MARK: - IBOutlets (Hook up in Interface Builder)
+    @IBOutlet weak var outlineView: OperationOutlineView!
     @IBOutlet weak var detailNameValueLabel: NSTextField!
     @IBOutlet weak var detailPathValueLabel: NSTextField!
     @IBOutlet weak var detailKindValueLabel: NSTextField!
     @IBOutlet weak var detailSizeValueLabel: NSTextField!
+    @IBOutlet weak var detailDataDorkSizeValueLabel: NSTextField!
+    @IBOutlet weak var detailResourceForkSizeValueLabel: NSTextField!
     @IBOutlet weak var detailCreatedValueLabel: NSTextField!
     @IBOutlet weak var detailModifiedValueLabel: NSTextField!
-    @IBOutlet weak var detailTypeCreatorValueLabel: NSTextField!
+    @IBOutlet weak var detailTypeValueLabel: NSTextField!
+    @IBOutlet weak var detailCreatorValueLabel: NSTextField!
     
     private var rootNodes: [HFSNode] = []
     private var selectedNode: HFSNode?
-    private var detailRowLabels: [String: NSTextField] = [:]
-    private var hasConfiguredColumns = false
+    private var currentInternalDragPaths: [String] = []
+    private var typeCreatorDialogDelegate: FourCharacterCodeDelegate?
     
     private static let byteFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
+        formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB, .useTB]
         formatter.countStyle = .file
         formatter.isAdaptive = true
         return formatter
@@ -170,26 +188,33 @@ class VolumeDataViewController: NSViewController {
             detailPathValueLabel?.stringValue = "-"
             detailKindValueLabel?.stringValue = "-"
             detailSizeValueLabel?.stringValue = "-"
+            detailDataDorkSizeValueLabel?.stringValue = "-"
+            detailResourceForkSizeValueLabel?.stringValue = "-"
             detailCreatedValueLabel?.stringValue = "-"
             detailModifiedValueLabel?.stringValue = "-"
-            detailTypeCreatorValueLabel?.stringValue = "-"
+            detailTypeValueLabel?.stringValue = "-"
+            detailCreatorValueLabel?.stringValue = "-"
             return
         }
         
         let info = node.info
-        detailNameValueLabel?.stringValue = info.name
-        detailPathValueLabel?.stringValue = info.path
+        detailNameValueLabel?.stringValue = sanitizedDisplayText(info.name)
+        detailPathValueLabel?.stringValue = sanitizedDisplayText(info.path)
         detailKindValueLabel?.stringValue = info.isDirectory ? "Folder" : "File"
         detailSizeValueLabel?.stringValue = info.isDirectory ? "-" : sizeString(for: info)
+        detailResourceForkSizeValueLabel?.stringValue = info.isDirectory ? "-" : Self.byteFormatter.string(fromByteCount: Int64(info.resourceForkSize))
+        detailDataDorkSizeValueLabel?.stringValue = info.isDirectory ? "-" : Self.byteFormatter.string(fromByteCount: Int64(info.dataForkSize))
         detailCreatedValueLabel?.stringValue = formatDateIfMeaningful(info.created)
         detailModifiedValueLabel?.stringValue = formatDateIfMeaningful(info.modified)
         
         if info.isDirectory {
-            detailTypeCreatorValueLabel?.stringValue = "-"
+            detailTypeValueLabel?.stringValue = "-"
+            detailCreatorValueLabel?.stringValue = "-"
         } else {
             let type = info.fileType.isEmpty ? "????" : info.fileType
             let creator = info.fileCreator.isEmpty ? "????" : info.fileCreator
-            detailTypeCreatorValueLabel?.stringValue = "\(type) / \(creator)"
+            detailTypeValueLabel?.stringValue = type
+            detailCreatorValueLabel?.stringValue = creator
         }
     }
     
@@ -215,38 +240,16 @@ class VolumeDataViewController: NSViewController {
         }
         return Self.tableDateFormatter.string(from: info.modified)
     }
-    
-    private func configureOutlineColumns() {
-        guard let outlineView else { return }
-        guard !hasConfiguredColumns else { return }
-        
-        outlineView.autosaveTableColumns = false
-        outlineView.outlineTableColumn = nil
-        for existing in outlineView.tableColumns {
-            outlineView.removeTableColumn(existing)
-        }
-        outlineView.columnAutoresizingStyle = .noColumnAutoresizing
-        
-        let name = NSTableColumn(identifier: ColumnID.name)
-        name.title = "Name"
-        name.minWidth = 320
-        name.width = 500
-        
-        let size = NSTableColumn(identifier: ColumnID.size)
-        size.title = "Size"
-        size.minWidth = 90
-        size.width = 120
-        
-        let modified = NSTableColumn(identifier: ColumnID.modified)
-        modified.title = "Modified"
-        modified.minWidth = 160
-        modified.width = 190
-        
-        outlineView.addTableColumn(name)
-        outlineView.addTableColumn(size)
-        outlineView.addTableColumn(modified)
-        outlineView.outlineTableColumn = name
-        hasConfiguredColumns = true
+
+    private func sanitizedDisplayText(_ text: String) -> String {
+        let replaced = text
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\t", with: " ")
+        let withoutControls = replaced.components(separatedBy: CharacterSet.controlCharacters).joined(separator: " ")
+        return withoutControls
+            .replacingOccurrences(of: "\\s+", with: " ", options: NSString.CompareOptions.regularExpression)
+            .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     }
     
     private func destinationDirectoryPathForImport() -> String {
@@ -283,12 +286,49 @@ class VolumeDataViewController: NSViewController {
         return keep.sorted { $0.info.path.count > $1.info.path.count }
     }
     
-    private func copyOut(node: HFSNode, to hostPath: URL) throws {
-        guard let volume else { return }
+    private func normalizedTopLevelPaths(_ paths: [String]) -> [String] {
+        let sorted = paths.sorted { $0.count < $1.count }
+        var keep: [String] = []
+        for path in sorted {
+            let isNested = keep.contains { parent in
+                path == parent || path.hasPrefix(parent + ":")
+            }
+            if !isNested {
+                keep.append(path)
+            }
+        }
+        return keep
+    }
+    
+    private func isInvalidInternalDrop(sourcePaths: [String], destinationPath: String) -> Bool {
+        for sourcePath in sourcePaths {
+            if destinationPath == sourcePath || destinationPath.hasPrefix(sourcePath + ":") {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private func copyOut(node: HFSNode, to hostPath: URL) throws -> URL {
+        guard let volume else { throw HFSError.volumeClosed }
         if node.info.isDirectory {
             try volume.copyOutDirectory(hfsPath: node.info.path, toHostDirectory: hostPath)
+            return hostPath
         } else {
+            var isDirectory: ObjCBool = false
+            let destinationExists = FileManager.default.fileExists(atPath: hostPath.path, isDirectory: &isDirectory)
+            if destinationExists && isDirectory.boolValue {
+                let beforeEntries = Set((try? FileManager.default.contentsOfDirectory(atPath: hostPath.path)) ?? [])
+                try volume.copyOut(hfsPath: node.info.path, toHostPath: hostPath)
+                let afterEntries = Set((try? FileManager.default.contentsOfDirectory(atPath: hostPath.path)) ?? [])
+                let created = afterEntries.subtracting(beforeEntries).sorted()
+                if let createdName = created.first {
+                    return hostPath.appendingPathComponent(createdName, isDirectory: false)
+                }
+                return hostPath.appendingPathComponent(node.info.name, isDirectory: false)
+            }
             try volume.copyOut(hfsPath: node.info.path, toHostPath: hostPath)
+            return hostPath
         }
     }
     
@@ -318,6 +358,37 @@ class VolumeDataViewController: NSViewController {
         guard let volume else { return nil }
         return try volume.list(directory: directoryPath).first {
             $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame
+        }
+    }
+    
+    private func copyWithinVolume(sourcePath: String, toParentHFSPath parentPath: String) throws {
+        guard let volume else { return }
+        if parentHFSPath(of: sourcePath) == parentPath { return }
+        
+        let sourceInfo = try volume.attributes(of: sourcePath)
+        let destinationName = sourceInfo.name
+        let destinationPath = joinHFSPath(parentPath, destinationName)
+        
+        if let existing = try existingItem(named: destinationName, inDirectory: parentPath) {
+            if existing.path == sourcePath { return }
+            let shouldReplace = confirmReplace(existingName: existing.name, isDirectory: existing.isDirectory)
+            guard shouldReplace else { return }
+            try volume.delete(existing)
+        }
+        
+        let tempBase = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SectorInternalCopy-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempBase, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempBase) }
+        
+        let tempHostPath = tempBase.appendingPathComponent(destinationName, isDirectory: sourceInfo.isDirectory)
+        if sourceInfo.isDirectory {
+            try volume.copyOutDirectory(hfsPath: sourcePath, toHostDirectory: tempHostPath)
+            try volume.copyInDirectory(hostDirectory: tempHostPath, toHFSPath: destinationPath)
+        } else {
+            let tempNode = HFSNode(info: sourceInfo)
+            let exportedURL = try copyOut(node: tempNode, to: tempBase)
+            try volume.copyIn(hostPath: exportedURL, toHFSPath: destinationPath)
         }
     }
     
@@ -356,9 +427,14 @@ class VolumeDataViewController: NSViewController {
         
         var urls: [URL] = []
         for node in nodes {
-            let hostURL = base.appendingPathComponent(node.info.name, isDirectory: node.info.isDirectory)
-            try copyOut(node: node, to: hostURL)
-            urls.append(hostURL)
+            if node.info.isDirectory {
+                let hostURL = base.appendingPathComponent(node.info.name, isDirectory: true)
+                let exportedURL = try copyOut(node: node, to: hostURL)
+                urls.append(exportedURL)
+            } else {
+                let exportedURL = try copyOut(node: node, to: base)
+                urls.append(exportedURL)
+            }
         }
         return urls
     }
@@ -379,6 +455,62 @@ class VolumeDataViewController: NSViewController {
         guard !value.isEmpty, !value.contains(":") else { return nil }
         return value
     }
+    
+    private func promptForTypeAndCreator(currentType: String, currentCreator: String) -> (type: String, creator: String)? {
+        let alert = NSAlert()
+        alert.messageText = "Set Type and Creator"
+        alert.informativeText = "Enter a four-character Type and Creator code."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        
+        let typeField = NSTextField(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
+        let creatorField = NSTextField(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
+        typeField.stringValue = currentType
+        creatorField.stringValue = currentCreator
+        
+        let typeLabel = NSTextField(labelWithString: "Type:")
+        let creatorLabel = NSTextField(labelWithString: "Creator:")
+        typeLabel.alignment = .right
+        creatorLabel.alignment = .right
+        
+        let grid = NSGridView(views: [
+            [typeLabel, typeField],
+            [creatorLabel, creatorField]
+        ])
+        grid.rowSpacing = 8
+        grid.columnSpacing = 8
+        grid.translatesAutoresizingMaskIntoConstraints = false
+        grid.column(at: 0).xPlacement = .trailing
+        grid.column(at: 1).xPlacement = .fill
+        
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: 62))
+        container.addSubview(grid)
+        NSLayoutConstraint.activate([
+            grid.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            grid.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            grid.topAnchor.constraint(equalTo: container.topAnchor),
+            grid.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        alert.accessoryView = container
+        
+        let okButton = alert.buttons.first
+        okButton?.isEnabled = (typeField.stringValue.count == 4 && creatorField.stringValue.count == 4)
+        
+        let delegate = FourCharacterCodeDelegate()
+        delegate.okButton = okButton
+        delegate.typeField = typeField
+        delegate.creatorField = creatorField
+        typeField.delegate = delegate
+        creatorField.delegate = delegate
+        typeCreatorDialogDelegate = delegate
+        
+        defer { typeCreatorDialogDelegate = nil }
+        
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        guard typeField.stringValue.count == 4, creatorField.stringValue.count == 4 else { return nil }
+        return (typeField.stringValue, creatorField.stringValue)
+    }
 
     func updateUI() {
         resetTreeAndReload()
@@ -386,102 +518,21 @@ class VolumeDataViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if outlineView == nil {
-            configureProgrammaticUI()
-        }
         
-        outlineView?.dataSource = self
-        outlineView?.delegate = self
-        outlineView?.target = self
-        outlineView?.action = #selector(handleOutlineSelectionChanged(_:))
-        configureOutlineColumns()
+        precondition(outlineView != nil, "VolumeDataViewController requires outlineView outlet to be connected in Storyboard.")
         
-        outlineView?.registerForDraggedTypes([.fileURL])
-        outlineView?.setDraggingSourceOperationMask(.copy, forLocal: false)
-        outlineView?.setDraggingSourceOperationMask([], forLocal: true)
+        outlineView.dataSource = self
+        outlineView.delegate = self
+        outlineView.target = self
+        outlineView.action = #selector(handleOutlineSelectionChanged(_:))
+        outlineView.actionDelegate = self
+        
+        outlineView.registerForDraggedTypes([.fileURL])
+        outlineView.setDraggingSourceOperationMask(.copy, forLocal: false)
+        outlineView.setDraggingSourceOperationMask([.move, .copy], forLocal: true)
         
         updateDetailLabels(with: nil)
         resetTreeAndReload()
-    }
-    
-    private func configureProgrammaticUI() {
-        let container = NSView(frame: view.bounds)
-        container.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(container)
-        
-        NSLayoutConstraint.activate([
-            container.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            container.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            container.topAnchor.constraint(equalTo: view.topAnchor),
-            container.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        
-        let scroll = NSScrollView()
-        scroll.translatesAutoresizingMaskIntoConstraints = false
-        scroll.borderType = .bezelBorder
-        scroll.hasVerticalScroller = true
-        
-        let outline = OperationOutlineView()
-        outline.headerView = NSTableHeaderView()
-        outline.usesAlternatingRowBackgroundColors = false
-        outline.allowsMultipleSelection = true
-        outline.rowHeight = 20
-        outline.actionDelegate = self
-        
-        scroll.documentView = outline
-        container.addSubview(scroll)
-        self.outlineView = outline
-        (outlineView as? OperationOutlineView)?.actionDelegate = self
-        
-        let detailStack = NSStackView()
-        detailStack.translatesAutoresizingMaskIntoConstraints = false
-        detailStack.orientation = .vertical
-        detailStack.alignment = .leading
-        detailStack.spacing = 4
-        container.addSubview(detailStack)
-        
-        func addDetailRow(key: String, title: String) -> NSTextField {
-            let row = NSStackView()
-            row.orientation = .horizontal
-            row.alignment = .firstBaseline
-            row.spacing = 6
-            
-            let titleLabel = NSTextField(labelWithString: "\(title):")
-            titleLabel.textColor = .secondaryLabelColor
-            titleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-            titleLabel.setContentHuggingPriority(.required, for: .horizontal)
-            
-            let valueLabel = NSTextField(labelWithString: "-")
-            valueLabel.lineBreakMode = .byTruncatingMiddle
-            valueLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-            
-            row.addArrangedSubview(titleLabel)
-            row.addArrangedSubview(valueLabel)
-            detailStack.addArrangedSubview(row)
-            detailRowLabels[key] = valueLabel
-            return valueLabel
-        }
-        
-        detailNameValueLabel = addDetailRow(key: "name", title: "Name")
-        detailPathValueLabel = addDetailRow(key: "path", title: "Path")
-        detailKindValueLabel = addDetailRow(key: "kind", title: "Kind")
-        detailSizeValueLabel = addDetailRow(key: "size", title: "Size")
-        detailCreatedValueLabel = addDetailRow(key: "created", title: "Created")
-        detailModifiedValueLabel = addDetailRow(key: "modified", title: "Modified")
-        detailTypeCreatorValueLabel = addDetailRow(key: "typecreator", title: "Type/Creator")
-        
-        NSLayoutConstraint.activate([
-            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
-            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
-            scroll.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
-            scroll.bottomAnchor.constraint(equalTo: detailStack.topAnchor, constant: -10),
-            
-            detailStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
-            detailStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
-            detailStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -10),
-            
-            detailStack.heightAnchor.constraint(greaterThanOrEqualToConstant: 92)
-        ])
     }
     
     @objc private func handleOutlineSelectionChanged(_ sender: Any?) {
@@ -510,8 +561,12 @@ class VolumeDataViewController: NSViewController {
         guard panel.runModal() == .OK, let baseFolder = panel.url else { return }
         
         do {
-            let target = baseFolder.appendingPathComponent(selectedNode.info.name, isDirectory: selectedNode.info.isDirectory)
-            try copyOut(node: selectedNode, to: target)
+            if selectedNode.info.isDirectory {
+                let target = baseFolder.appendingPathComponent(selectedNode.info.name, isDirectory: true)
+                _ = try copyOut(node: selectedNode, to: target)
+            } else {
+                _ = try copyOut(node: selectedNode, to: baseFolder)
+            }
         } catch {
             presentErrorAlert(for: error)
         }
@@ -578,6 +633,34 @@ class VolumeDataViewController: NSViewController {
             presentErrorAlert(for: error)
         }
     }
+    
+    @objc func changeTypeCreatorSelectedItem(_ sender: Any?) {
+        guard let selectedNode, let volume else {
+            NSSound.beep()
+            return
+        }
+        guard !selectedNode.info.isDirectory else {
+            NSSound.beep()
+            return
+        }
+        
+        let currentType = selectedNode.info.fileType.isEmpty ? "????" : selectedNode.info.fileType
+        let currentCreator = selectedNode.info.fileCreator.isEmpty ? "????" : selectedNode.info.fileCreator
+        
+        guard let value = promptForTypeAndCreator(currentType: currentType, currentCreator: currentCreator) else {
+            return
+        }
+        
+        do {
+            try volume.setTypeCreator(path: selectedNode.info.path, fileType: value.type, fileCreator: value.creator)
+            let updated = try volume.attributes(of: selectedNode.info.path)
+            let updatedNode = HFSNode(info: updated)
+            self.selectedNode = updatedNode
+            updateDetailLabels(with: updatedNode)
+        } catch {
+            presentErrorAlert(for: error)
+        }
+    }
 }
 
 extension VolumeDataViewController: NSUserInterfaceValidations {
@@ -592,11 +675,24 @@ extension VolumeDataViewController: NSUserInterfaceValidations {
             item.action == #selector(renameSelectedItem(_:)) {
             return selectedNode != nil
         }
+        if item.action == #selector(changeTypeCreatorSelectedItem(_:)) {
+            guard let selectedNode else { return false }
+            return !selectedNode.info.isDirectory
+        }
         return true
     }
 }
 
 extension VolumeDataViewController: NSOutlineViewDataSource {
+    func outlineView(_ outlineView: NSOutlineView,
+                     draggingSession session: NSDraggingSession,
+                     sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        if context == .withinApplication {
+            return [.move, .copy]
+        }
+        return .copy
+    }
+    
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
         let node = node(for: item)
         ensureChildrenLoaded(for: node)
@@ -617,14 +713,17 @@ extension VolumeDataViewController: NSOutlineViewDataSource {
     func outlineView(_ outlineView: NSOutlineView,
                      writeItems items: [Any],
                      to pasteboard: NSPasteboard) -> Bool {
-        let nodes = selectedNodes(from: items)
+        let nodes = normalizedDeleteList(from: selectedNodes(from: items))
         guard !nodes.isEmpty else { return false }
+        
+        currentInternalDragPaths = normalizedTopLevelPaths(nodes.map(\.info.path))
         
         do {
             let urls = try exportedURLsForDrag(nodes: nodes)
             pasteboard.clearContents()
             return pasteboard.writeObjects(urls as [NSURL])
         } catch {
+            currentInternalDragPaths = []
             presentErrorAlert(for: error)
             return false
         }
@@ -645,6 +744,18 @@ extension VolumeDataViewController: NSOutlineViewDataSource {
             outlineView.setDropItem(nil, dropChildIndex: NSOutlineViewDropOnItemIndex)
         }
         
+        let destinationPath = targetNode?.info.path ?? ":"
+        if (info.draggingSource as AnyObject?) === outlineView, !currentInternalDragPaths.isEmpty {
+            let internalPaths = currentInternalDragPaths
+            if isInvalidInternalDrop(sourcePaths: internalPaths, destinationPath: destinationPath) {
+                return []
+            }
+            let sourceMask = info.draggingSourceOperationMask
+            if sourceMask.contains(.move) { return .move }
+            if sourceMask.contains(.copy) { return .copy }
+            return []
+        }
+        
         let classes: [AnyClass] = [NSURL.self]
         let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
         let urls = info.draggingPasteboard.readObjects(forClasses: classes, options: options) as? [URL]
@@ -657,6 +768,38 @@ extension VolumeDataViewController: NSOutlineViewDataSource {
                      childIndex index: Int) -> Bool {
         let targetNode = item as? HFSNode
         let destinationPath = targetNode?.info.path ?? ":"
+        
+        if (info.draggingSource as AnyObject?) === outlineView, !currentInternalDragPaths.isEmpty {
+            let sourcePaths = currentInternalDragPaths
+            defer { currentInternalDragPaths = [] }
+            guard let volume else { return false }
+            if isInvalidInternalDrop(sourcePaths: sourcePaths, destinationPath: destinationPath) {
+                NSSound.beep()
+                return false
+            }
+            
+            let isCopy = info.draggingSourceOperationMask.contains(.copy)
+                && !info.draggingSourceOperationMask.contains(.move)
+            
+            do {
+                if isCopy {
+                    for sourcePath in sourcePaths {
+                        try copyWithinVolume(sourcePath: sourcePath, toParentHFSPath: destinationPath)
+                    }
+                } else {
+                    for sourcePath in sourcePaths {
+                        if parentHFSPath(of: sourcePath) == destinationPath { continue }
+                        try volume.move(path: sourcePath, toParentDirectory: destinationPath)
+                    }
+                }
+                resetTreeAndReload()
+                refreshVolumeInfoDisplay()
+                return true
+            } catch {
+                presentErrorAlert(for: error)
+                return false
+            }
+        }
         
         let classes: [AnyClass] = [NSURL.self]
         let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
@@ -678,6 +821,13 @@ extension VolumeDataViewController: NSOutlineViewDataSource {
             return false
         }
     }
+
+    func outlineView(_ outlineView: NSOutlineView,
+                     draggingSession session: NSDraggingSession,
+                     endedAt screenPoint: NSPoint,
+                     operation: NSDragOperation) {
+        currentInternalDragPaths = []
+    }
 }
 
 extension VolumeDataViewController: NSOutlineViewDelegate {
@@ -689,39 +839,12 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
         
         if columnID == ColumnID.name {
             let identifier = NSUserInterfaceItemIdentifier("HFSNameCell")
-            let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? {
-                let cell = NSTableCellView()
-                cell.identifier = identifier
-                
-                let imageView = NSImageView()
-                imageView.translatesAutoresizingMaskIntoConstraints = false
-                imageView.imageScaling = .scaleProportionallyDown
-                cell.imageView = imageView
-                cell.addSubview(imageView)
-                
-                let textField = NSTextField(labelWithString: "")
-                textField.translatesAutoresizingMaskIntoConstraints = false
-                textField.lineBreakMode = .byTruncatingTail
-                textField.isEditable = false
-                textField.isBordered = false
-                textField.drawsBackground = false
-                cell.textField = textField
-                cell.addSubview(textField)
-                
-                NSLayoutConstraint.activate([
-                    imageView.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
-                    imageView.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-                    imageView.widthAnchor.constraint(equalToConstant: 16),
-                    imageView.heightAnchor.constraint(equalToConstant: 16),
-                    textField.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 6),
-                    textField.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
-                    textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
-                ])
-                
-                return cell
-            }()
+            guard let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView else {
+                assertionFailure("Missing prototype cell with identifier HFSNameCell")
+                return nil
+            }
             
-            cell.textField?.stringValue = node.info.name
+            cell.textField?.stringValue = sanitizedDisplayText(node.info.name)
             let symbolName = node.info.isDirectory ? "folder.fill" : "doc.fill"
             if let symbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
                 cell.imageView?.image = symbol
@@ -729,32 +852,23 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
             return cell
         }
         
-        let identifier = NSUserInterfaceItemIdentifier("HFSTextCell-\(columnID.rawValue)")
-        let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? {
-            let cell = NSTableCellView()
-            cell.identifier = identifier
-            let textField = NSTextField(labelWithString: "")
-            textField.translatesAutoresizingMaskIntoConstraints = false
-            textField.lineBreakMode = .byTruncatingTail
-            textField.isEditable = false
-            textField.isBordered = false
-            textField.drawsBackground = false
-            cell.textField = textField
-            cell.addSubview(textField)
-            
-            NSLayoutConstraint.activate([
-                textField.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 6),
-                textField.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -6),
-                textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
-            ])
-            return cell
-        }()
+        let identifier: NSUserInterfaceItemIdentifier
+        if columnID == ColumnID.size {
+            identifier = NSUserInterfaceItemIdentifier("HFSSizeCell")
+        } else if columnID == ColumnID.modified {
+            identifier = NSUserInterfaceItemIdentifier("HFSModifiedCell")
+        } else {
+            return nil
+        }
+        
+        guard let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView else {
+            assertionFailure("Missing prototype cell with identifier \(identifier.rawValue)")
+            return nil
+        }
         
         if columnID == ColumnID.size {
-            cell.textField?.alignment = .right
             cell.textField?.stringValue = node.info.isDirectory ? "-" : sizeString(for: node.info)
         } else if columnID == ColumnID.modified {
-            cell.textField?.alignment = .left
             cell.textField?.stringValue = tableModifiedString(for: node.info)
         }
         

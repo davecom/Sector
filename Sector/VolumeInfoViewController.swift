@@ -12,7 +12,6 @@ class VolumeInfoViewController: NSViewController {
     
     final var volume: HFSVolume?
     
-    @IBOutlet weak var volumeNameLabel: NSTextField!
     @IBOutlet weak var totalSizeValueLabel: NSTextField!
     @IBOutlet weak var usedSizeValueLabel: NSTextField!
     @IBOutlet weak var freeSizeValueLabel: NSTextField!
@@ -53,8 +52,6 @@ class VolumeInfoViewController: NSViewController {
     func updateUI() {
         do {
             if let volumeInfo = try volume?.volumeInfo() {
-                volumeNameLabel.stringValue = ""
-                volumeNameLabel.isHidden = true
                 totalSizeValueLabel.stringValue = formatBytes(volumeInfo.totalBytes)
                 usedSizeValueLabel.stringValue = formatBytes(volumeInfo.usedBytes)
                 freeSizeValueLabel.stringValue = formatBytes(volumeInfo.freeBytes)

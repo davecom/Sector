@@ -89,6 +89,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         renameItem.keyEquivalentModifierMask = [.command]
         renameItem.target = nil
         
+        let typeCreatorItem = NSMenuItem(title: "Type/Creator…",
+                                         action: #selector(VolumeDataViewController.changeTypeCreatorSelectedItem(_:)),
+                                         keyEquivalent: "t")
+        typeCreatorItem.keyEquivalentModifierMask = [.command, .option]
+        typeCreatorItem.target = nil
+        
         let deleteItem = NSMenuItem(title: "Delete",
                                     action: #selector(VolumeDataViewController.deleteSelectedItems(_:)),
                                     keyEquivalent: String(UnicodeScalar(NSDeleteCharacter)!))
@@ -99,6 +105,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         volumeMenu.addItem(copyOutItem)
         volumeMenu.addItem(NSMenuItem.separator())
         volumeMenu.addItem(renameItem)
+        volumeMenu.addItem(typeCreatorItem)
         volumeMenu.addItem(deleteItem)
         
         let insertIndex = mainMenu.items.firstIndex { $0.title == "Window" } ?? mainMenu.numberOfItems
