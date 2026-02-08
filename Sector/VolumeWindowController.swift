@@ -19,10 +19,13 @@ class VolumeWindowController: NSWindowController {
         static let toolbar = NSToolbar.Identifier("SectorVolumeToolbar")
         static let importItem = NSToolbarItem.Identifier("SectorToolbarImport")
         static let exportItem = NSToolbarItem.Identifier("SectorToolbarExport")
+        static let transferModeItem = NSToolbarItem.Identifier("SectorToolbarTransferMode")
         static let renameItem = NSToolbarItem.Identifier("SectorToolbarRename")
         static let typeCreatorItem = NSToolbarItem.Identifier("SectorToolbarTypeCreator")
         static let deleteItem = NSToolbarItem.Identifier("SectorToolbarDelete")
     }
+    
+    private weak var transferModePopUpButton: NSPopUpButton?
     
     func configureUI() {
         if let title = displayName, !title.isEmpty {
@@ -66,11 +69,25 @@ class VolumeWindowController: NSWindowController {
     private func configureToolbar() {
         let toolbar = NSToolbar(identifier: ToolbarIdentifiers.toolbar)
         toolbar.delegate = self
-        toolbar.displayMode = .iconOnly
+        toolbar.displayMode = .iconAndLabel
         toolbar.allowsUserCustomization = false
         toolbar.autosavesConfiguration = false
         self.window?.toolbar = toolbar
         self.window?.toolbarStyle = .unified
+    }
+    
+    private func volumeDataViewController() -> VolumeDataViewController? {
+        guard let split = contentViewController as? NSSplitViewController else { return nil }
+        guard split.splitViewItems.count > 1 else { return nil }
+        return split.splitViewItems[1].viewController as? VolumeDataViewController
+    }
+    
+    @objc private func transferModeSelectionChanged(_ sender: NSPopUpButton) {
+        guard sender.indexOfSelectedItem >= 0 else { return }
+        guard let selectedItem = sender.item(at: sender.indexOfSelectedItem) else { return }
+        guard let rawValue = selectedItem.representedObject as? Int32 else { return }
+        guard let mode = HFSVolume.CopyMode(rawValue: rawValue) else { return }
+        volumeDataViewController()?.setTransferMode(mode)
     }
     
     
@@ -87,6 +104,7 @@ extension VolumeWindowController: NSToolbarDelegate {
         return [
             ToolbarIdentifiers.importItem,
             ToolbarIdentifiers.exportItem,
+            ToolbarIdentifiers.transferModeItem,
             ToolbarIdentifiers.renameItem,
             ToolbarIdentifiers.typeCreatorItem,
             ToolbarIdentifiers.deleteItem,
@@ -98,6 +116,7 @@ extension VolumeWindowController: NSToolbarDelegate {
         return [
             ToolbarIdentifiers.importItem,
             ToolbarIdentifiers.exportItem,
+            ToolbarIdentifiers.transferModeItem,
             ToolbarIdentifiers.renameItem,
             ToolbarIdentifiers.typeCreatorItem,
             ToolbarIdentifiers.deleteItem,
@@ -127,6 +146,40 @@ extension VolumeWindowController: NSToolbarDelegate {
             item.image = NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: nil)
             item.target = nil
             item.action = #selector(VolumeDataViewController.exportSelectedItem(_:))
+            return item
+            
+        case ToolbarIdentifiers.transferModeItem:
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.label = "Mode"
+            item.paletteLabel = "Transfer Mode"
+            item.toolTip = "Transfer mode for Copy In/Copy Out operations"
+            
+            let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 150, height: 28), pullsDown: false)
+            let modes: [(String, HFSVolume.CopyMode)] = [
+                ("Auto", .auto),
+                ("Raw", .raw),
+                ("MacBinary", .macBinary),
+                ("BinHex", .binHex),
+                ("Text", .text)
+            ]
+            for (title, mode) in modes {
+                popup.addItem(withTitle: title)
+                popup.lastItem?.representedObject = mode.rawValue
+            }
+            popup.target = self
+            popup.action = #selector(transferModeSelectionChanged(_:))
+            popup.sizeToFit()
+            popup.frame.size.width = 150
+            
+            if let dataVC = volumeDataViewController() {
+                let index = modes.firstIndex(where: { $0.1 == dataVC.transferMode }) ?? 0
+                popup.selectItem(at: index)
+            } else {
+                popup.selectItem(at: 0)
+            }
+            
+            transferModePopUpButton = popup
+            item.view = popup
             return item
         
         case ToolbarIdentifiers.renameItem:

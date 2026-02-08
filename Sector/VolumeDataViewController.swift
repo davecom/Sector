@@ -50,6 +50,7 @@ private final class FourCharacterCodeDelegate: NSObject, NSTextFieldDelegate {
 class VolumeDataViewController: NSViewController {
     
     final var volume: HFSVolume?
+    private(set) var transferMode: HFSVolume.CopyMode = .auto
     
     // MARK: - IBOutlets (Hook up in Interface Builder)
     @IBOutlet weak var outlineView: OperationOutlineView!
@@ -312,14 +313,14 @@ class VolumeDataViewController: NSViewController {
     private func copyOut(node: HFSNode, to hostPath: URL) throws -> URL {
         guard let volume else { throw HFSError.volumeClosed }
         if node.info.isDirectory {
-            try volume.copyOutDirectory(hfsPath: node.info.path, toHostDirectory: hostPath)
+            try volume.copyOutDirectory(hfsPath: node.info.path, toHostDirectory: hostPath, mode: transferMode)
             return hostPath
         } else {
             var isDirectory: ObjCBool = false
             let destinationExists = FileManager.default.fileExists(atPath: hostPath.path, isDirectory: &isDirectory)
             if destinationExists && isDirectory.boolValue {
                 let beforeEntries = Set((try? FileManager.default.contentsOfDirectory(atPath: hostPath.path)) ?? [])
-                try volume.copyOut(hfsPath: node.info.path, toHostPath: hostPath)
+                try volume.copyOut(hfsPath: node.info.path, toHostPath: hostPath, mode: transferMode)
                 let afterEntries = Set((try? FileManager.default.contentsOfDirectory(atPath: hostPath.path)) ?? [])
                 let created = afterEntries.subtracting(beforeEntries).sorted()
                 if let createdName = created.first {
@@ -327,7 +328,7 @@ class VolumeDataViewController: NSViewController {
                 }
                 return hostPath.appendingPathComponent(node.info.name, isDirectory: false)
             }
-            try volume.copyOut(hfsPath: node.info.path, toHostPath: hostPath)
+            try volume.copyOut(hfsPath: node.info.path, toHostPath: hostPath, mode: transferMode)
             return hostPath
         }
     }
@@ -348,9 +349,9 @@ class VolumeDataViewController: NSViewController {
         }
         
         if isDirectory.boolValue {
-            try volume.copyInDirectory(hostDirectory: hostURL, toHFSPath: destinationPath)
+            try volume.copyInDirectory(hostDirectory: hostURL, toHFSPath: destinationPath, mode: transferMode)
         } else {
-            try volume.copyIn(hostPath: hostURL, toHFSPath: destinationPath)
+            try volume.copyIn(hostPath: hostURL, toHFSPath: destinationPath, mode: transferMode)
         }
     }
     
@@ -388,7 +389,7 @@ class VolumeDataViewController: NSViewController {
         } else {
             let tempNode = HFSNode(info: sourceInfo)
             let exportedURL = try copyOut(node: tempNode, to: tempBase)
-            try volume.copyIn(hostPath: exportedURL, toHFSPath: destinationPath)
+            try volume.copyIn(hostPath: exportedURL, toHFSPath: destinationPath, mode: transferMode)
         }
     }
     
@@ -632,6 +633,10 @@ class VolumeDataViewController: NSViewController {
         } catch {
             presentErrorAlert(for: error)
         }
+    }
+    
+    func setTransferMode(_ mode: HFSVolume.CopyMode) {
+        transferMode = mode
     }
     
     @objc func changeTypeCreatorSelectedItem(_ sender: Any?) {
