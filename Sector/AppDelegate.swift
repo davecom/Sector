@@ -52,6 +52,66 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    @IBAction func newDocument(_ sender: AnyObject) {
+        let savePanel = NSSavePanel()
+        savePanel.canCreateDirectories = true
+        savePanel.nameFieldStringValue = "Untitled.img"
+        savePanel.isExtensionHidden = false
+        if let imgType = UTType(filenameExtension: "img") {
+            savePanel.allowedContentTypes = [imgType]
+        }
+        
+        let options = NewImageOptionsController()
+        savePanel.accessoryView = options.containerView
+        
+        guard savePanel.runModal() == .OK, let baseURL = savePanel.url else { return }
+        let targetURL: URL
+        if baseURL.pathExtension.lowercased() == "img" {
+            targetURL = baseURL
+        } else {
+            targetURL = baseURL.appendingPathExtension("img")
+        }
+        
+        guard options.isValid else {
+            presentErrorAlert(message: "Please choose a valid size and a volume name up to 27 characters.")
+            return
+        }
+        
+        do {
+            try HFSVolume.createBlank(path: targetURL, size: options.selectedSizeBytes, volumeName: options.volumeName)
+            AppDelegate.fileController.handleFile(at: targetURL)
+        } catch {
+            presentErrorAlert(for: error)
+        }
+    }
+    
+    @IBAction func runHFSCK(_ sender: AnyObject) {
+        let panel = NSOpenPanel()
+        panel.title = "Choose HFS Disk Image to Check"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.prompt = "Choose"
+        
+        guard panel.runModal() == .OK, let imageURL = panel.url else { return }
+        
+        let warning = NSAlert()
+        warning.alertStyle = .warning
+        warning.messageText = "Run HFS Check and Repair?"
+        warning.informativeText = "This operation may modify and potentially damage the disk image. Continue only if you have a backup."
+        warning.addButton(withTitle: "Cancel")
+        warning.addButton(withTitle: "Run HFS Check")
+        guard warning.runModal() == .alertSecondButtonReturn else { return }
+        
+        do {
+            let output = try runHFSCheck(on: imageURL)
+            presentHFSCheckResults(output, for: imageURL)
+        } catch {
+            presentErrorAlert(for: error)
+        }
+    }
+    
     // Create an email to support
     @IBAction func emailSupport(sender: NSMenuItem) {
         let emailURL: URL = URL(string: "mailto:retrodither@oaksnow.com")!
@@ -95,6 +155,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         typeCreatorItem.keyEquivalentModifierMask = [.command, .option]
         typeCreatorItem.target = nil
         
+        let setBlessedFolderItem = NSMenuItem(title: "Set Blessed Folder",
+                                              action: #selector(VolumeDataViewController.setBlessedFolderSelectedItem(_:)),
+                                              keyEquivalent: "")
+        setBlessedFolderItem.target = nil
+        
         let deleteItem = NSMenuItem(title: "Delete",
                                     action: #selector(VolumeDataViewController.deleteSelectedItems(_:)),
                                     keyEquivalent: String(UnicodeScalar(NSDeleteCharacter)!))
@@ -106,6 +171,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         volumeMenu.addItem(NSMenuItem.separator())
         volumeMenu.addItem(renameItem)
         volumeMenu.addItem(typeCreatorItem)
+        volumeMenu.addItem(setBlessedFolderItem)
         volumeMenu.addItem(deleteItem)
         
         let insertIndex = mainMenu.items.firstIndex { $0.title == "Window" } ?? mainMenu.numberOfItems
@@ -172,6 +238,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if modal {
             NSApp.runModal(for: window)
         }
+    }
+    
+    private func presentHFSCheckResults(_ output: String, for imageURL: URL) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "HFS Check Results"
+        alert.informativeText = imageURL.lastPathComponent
+        alert.addButton(withTitle: "OK")
+        
+        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 700, height: 420))
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .bezelBorder
+        
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 700, height: 420))
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = true
+        textView.autoresizingMask = [.width, .height]
+        textView.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        textView.string = output.isEmpty ? "(No output)" : output
+        
+        scrollView.documentView = textView
+        alert.accessoryView = scrollView
+        alert.runModal()
     }
 
 }

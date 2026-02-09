@@ -666,6 +666,24 @@ class VolumeDataViewController: NSViewController {
             presentErrorAlert(for: error)
         }
     }
+    
+    @objc func setBlessedFolderSelectedItem(_ sender: Any?) {
+        guard let selectedNode, let volume else {
+            NSSound.beep()
+            return
+        }
+        guard selectedNode.info.isDirectory else {
+            NSSound.beep()
+            return
+        }
+        
+        do {
+            try volume.setBlessed(path: selectedNode.info.path)
+            refreshVolumeInfoDisplay()
+        } catch {
+            presentErrorAlert(for: error)
+        }
+    }
 }
 
 extension VolumeDataViewController: NSUserInterfaceValidations {
@@ -683,6 +701,10 @@ extension VolumeDataViewController: NSUserInterfaceValidations {
         if item.action == #selector(changeTypeCreatorSelectedItem(_:)) {
             guard let selectedNode else { return false }
             return !selectedNode.info.isDirectory
+        }
+        if item.action == #selector(setBlessedFolderSelectedItem(_:)) {
+            guard let selectedNode else { return false }
+            return selectedNode.info.isDirectory
         }
         return true
     }
