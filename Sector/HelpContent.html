@@ -8,20 +8,33 @@
   <h1>Sector Help</h1>
   <p>Sector is a desktop utility for exploring and modifying classic Macintosh disk images.</p>
 
+  <h3>Backup your disk images before editing them with Sector. Sector's changes are irreversible and may result in data loss due to bugs or your own mistakes.</h3>
+  
   <h2>Supported Disk Images</h2>
   <p><strong>Sector supports classic HFS volumes only.</strong> It does not support HFS+ or APFS.</p>
   <p>If an image contains multiple HFS partitions, Sector prompts you to choose which partition to open.</p>
 
+  <h2>Working with Disk Images</h2>
+  <p>• You can open existing HFS disk images by dragging them onto the drop area in the main window or using Open from the File menu.<br>
+  • You can create new blank HFS disk images with a single HFS partition using the New option in the File menu or the button in the main window.<br></p>
+  
   <h2>Working with Files</h2>
   <p>• Drag files or folders from Finder into Sector to copy them into the selected directory.<br>
   • Drag files or folders from Sector into Finder to export them.<br>
   • You can also use the toolbar or the <strong>Volume</strong> menu for Copy In, Copy Out, Rename, and Delete.<br>
-  • Replace and delete operations require confirmation before changes are applied.</p>
+  • Replace and delete operations require confirmation before changes are applied.<br>
+  • You can select the mode you want files to be transferred with in the toolbar or use auto for educated guesses. Files with resource forks will be automatically copied out using MacBinary format in auto mode.<br>
+  • You can move files around disk images by dragging them. Hold alt-option while dragging to copy.</p>
 
   <h2>Good Practice</h2>
   <p>• Keep a backup of important disk images before editing.<br>
   • Volume statistics refresh after import, rename, and delete operations.<br>
   • If import or export fails, check Finder permissions and image write access.</p>
+  
+  <h2>Miscellaneous</h2>
+  <p>• Sector can attempt to repair damaged disk images using the option in the File menu.<br>
+  • You can bless a System Folder using Sector's Volume menu item (select it as the startup System Folder). The disk image must already be bootable though. Sector does not have the ability to make a bootable disk image (but can edit the contents of an existing one).<br>
+  • If Sector crashes or your computer crashes, disk images may not be safely closed. Images are unmounted when their window in Sector is closed.</p>
 
   <h2>Legal Notice</h2>
   <p>{{DISCLAIMER}}</p>
