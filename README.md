@@ -1,2 +1,0 @@
-# Sector
-Disk Image Editor
