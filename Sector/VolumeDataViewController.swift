@@ -372,7 +372,7 @@ class VolumeDataViewController: NSViewController {
             $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame
         }
     }
-    
+
     private func copyWithinVolume(sourcePath: String, toParentHFSPath parentPath: String) throws {
         guard let volume else { return }
         if parentHFSPath(of: sourcePath) == parentPath { return }
@@ -398,9 +398,9 @@ class VolumeDataViewController: NSViewController {
             try volume.copyOutDirectory(hfsPath: sourcePath, toHostDirectory: tempHostPath)
             try volume.copyInDirectory(hostDirectory: tempHostPath, toHFSPath: destinationPath)
         } else {
-            let tempNode = HFSNode(info: sourceInfo)
-            let exportedURL = try copyOut(node: tempNode, to: tempBase)
-            try volume.copyIn(hostPath: exportedURL, toHFSPath: destinationPath, mode: transferMode)
+            try volume.copyOut(hfsPath: sourcePath, toHostPath: tempBase, mode: .auto)
+            let exportedURL = tempBase.appendingPathComponent(destinationName, isDirectory: false)
+            try volume.copyIn(hostPath: exportedURL, toHFSPath: destinationPath, mode: .auto)
         }
     }
     

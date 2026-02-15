@@ -42,8 +42,9 @@ class MainViewController: NSViewController, DropViewDelegate {
         UserDefaults.standard.set(count, forKey: LAUNCH_COUNT_KEY)
         // Get the current bundle version for the app
         let infoDictionaryKey = kCFBundleVersionKey as String
-        guard let currentVersion = Bundle.main.object(forInfoDictionaryKey: infoDictionaryKey) as? String
-            else { fatalError("Expected to find a bundle version in the info dictionary") }
+        guard let currentVersion = Bundle.main.object(forInfoDictionaryKey: infoDictionaryKey) as? String else {
+            return
+        }
 
         let lastVersionPromptedForReview = UserDefaults.standard.string(forKey: LAST_REVIEWED_KEY)
 
@@ -139,4 +140,3 @@ class MainViewController: NSViewController, DropViewDelegate {
 
 
 }
-

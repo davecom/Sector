@@ -95,16 +95,21 @@ class FileController {
         vwc.showWindow(self)
         
         if let window = vwc.window {
-                
             // be ready to release memory when done
-            NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: nil, using: { [unowned self, unowned vwc] (n:Notification) -> Void in
-                    
-                    self.volumeWindowControllers.removeAll { $0 === vwc }
-                    vwc.contentViewController = nil // releases some memory
-                        NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: window)
-                    }
-                )
-                
+            var closeObserver: NSObjectProtocol?
+            closeObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: window,
+                queue: nil
+            ) { [weak self, weak vwc] (_: Notification) -> Void in
+                guard let self, let vwc else { return }
+                self.volumeWindowControllers.removeAll { $0 === vwc }
+                vwc.contentViewController = nil // releases some memory
+                if let closeObserver {
+                    NotificationCenter.default.removeObserver(closeObserver)
+                }
+            }
+            
             volumeWindowControllers.append(vwc)
         }
     }
