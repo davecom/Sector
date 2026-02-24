@@ -15,6 +15,15 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import Cocoa
 
+private final class HelpRootView: NSView {
+    var appearanceDidChange: (() -> Void)?
+    
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        appearanceDidChange?()
+    }
+}
+
 final class HelpViewController: NSViewController {
     private let requiresAcknowledgement: Bool
     private let onAcknowledged: (() -> Void)?
@@ -39,15 +48,16 @@ final class HelpViewController: NSViewController {
     }
     
     override func loadView() {
-        self.view = NSView(frame: NSRect(x: 0, y: 0, width: 820, height: 620))
+        let rootView = HelpRootView(frame: NSRect(x: 0, y: 0, width: 820, height: 620))
+        rootView.appearanceDidChange = { [weak self] in
+            self?.loadHelpContent()
+        }
+        self.view = rootView
         configureUI()
         loadHelpContent()
     }
     
     private func configureUI() {
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-        
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.borderType = .noBorder
         scrollView.hasVerticalScroller = true
@@ -57,7 +67,14 @@ final class HelpViewController: NSViewController {
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
+        textView.usesAdaptiveColorMappingForDarkAppearance = true
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
         textView.textContainerInset = NSSize(width: 10, height: 12)
+        textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         textView.textContainer?.widthTracksTextView = true
         textView.linkTextAttributes = [.foregroundColor: NSColor.systemTeal]
         scrollView.documentView = textView
@@ -141,6 +158,11 @@ final class HelpViewController: NSViewController {
     private func applyAppStyle(to attributed: NSAttributedString) -> NSAttributedString {
         let styled = NSMutableAttributedString(attributedString: attributed)
         let fullRange = NSRange(location: 0, length: styled.length)
+
+        // Normalize imported HTML colors so text remains readable in both light and dark mode.
+        styled.removeAttribute(.foregroundColor, range: fullRange)
+        styled.removeAttribute(.backgroundColor, range: fullRange)
+        styled.addAttribute(.foregroundColor, value: NSColor.labelColor, range: fullRange)
         
         styled.enumerateAttribute(.font, in: fullRange) { value, range, _ in
             let original = (value as? NSFont) ?? NSFont.systemFont(ofSize: 14)
@@ -159,7 +181,6 @@ final class HelpViewController: NSViewController {
                 newFont = NSFont.systemFont(ofSize: 14, weight: isBold ? .semibold : .regular)
             }
             styled.addAttribute(.font, value: newFont, range: range)
-            styled.addAttribute(.foregroundColor, value: NSColor.labelColor, range: range)
         }
         
         let whole = styled.string as NSString
