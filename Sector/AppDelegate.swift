@@ -35,6 +35,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         presentFirstLaunchHelpIfNeeded()
     }
     
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        registerBundledFonts()
+    }
+    
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
@@ -47,6 +51,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
+    }
+    
+    private func registerBundledFonts() {
+        guard let fontURL = Bundle.main.url(forResource: "ChicagoFLF", withExtension: "ttf") else {
+            print("Font not found in bundle: ChicagoFLF.ttf")
+            return
+        }
+
+        var error: Unmanaged<CFError>?
+        let ok = CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error)
+
+        if !ok {
+            let nsError = (error?.takeRetainedValue()) as Error?
+            print("Font registration failed: \(nsError?.localizedDescription ?? "unknown error")")
+        }
+
+        // Sanity check
+        if let font = NSFont(name: "ChicagoFLF", size: 36) {
+            print("Loaded font: \(font.fontName)")
+        } else {
+            print("NSFont lookup failed for ChicagoFLF")
+        }
     }
     
     @IBAction func openDocument(_ sender: AnyObject) {
