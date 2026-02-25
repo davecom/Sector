@@ -883,7 +883,7 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
             }
             
             cell.textField?.stringValue = sanitizedDisplayText(node.info.name)
-            let symbolName = node.info.isDirectory ? "folder.fill" : "doc.fill"
+            let symbolName = node.info.isDirectory ? "folder.fill" : node.info.fileType == "APPL" ? "diamond.fill" : "doc.fill"
             if let symbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
                 cell.imageView?.image = symbol
             }

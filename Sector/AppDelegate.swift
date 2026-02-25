@@ -43,6 +43,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Insert code here to tear down your application
     }
     
+    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
+        AppDelegate.fileController.handleFile(at: URL(fileURLWithPath: filename))
+        return true
+    }
+    
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             AppDelegate.fileController.handleFile(at: url)

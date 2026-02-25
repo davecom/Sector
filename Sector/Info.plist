@@ -4,11 +4,54 @@
 <dict>
 	<key>ATSApplicationFontsPath</key>
 	<string>.</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>2026 Oak Snow Consulting LLC</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>HFS Disk Image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.oaksnow.sector.hfs-disk-image</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>ChicagoFLF.ttf</string>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>HFS Disk Image</string>
+			<key>UTTypeIcons</key>
+			<dict>
+				<key>UTTypeIconBackgroundName</key>
+				<string>Floppy-disk</string>
+				<key>UTTypeIconBadgeName</key>
+				<string>Floppy-disk</string>
+				<key>UTTypeIconText</key>
+				<string>HFS Disk Image</string>
+			</dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.oaksnow.sector.hfs-disk-image</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>img</string>
+					<string>hda</string>
+				</array>
+			</dict>
+		</dict>
 	</array>
 </dict>
 </plist>
