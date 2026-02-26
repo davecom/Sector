@@ -173,13 +173,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let volumeMenu = NSMenu(title: "Volume")
         volumeMenuItem.submenu = volumeMenu
         
-        let copyInItem = NSMenuItem(title: "Copy In…",
+        let copyInItem = NSMenuItem(title: "Import",
                                     action: #selector(VolumeDataViewController.importItems(_:)),
                                     keyEquivalent: "i")
         copyInItem.keyEquivalentModifierMask = [.command]
         copyInItem.target = nil
         
-        let copyOutItem = NSMenuItem(title: "Copy Out…",
+        let copyOutItem = NSMenuItem(title: "Export",
                                      action: #selector(VolumeDataViewController.exportSelectedItem(_:)),
                                      keyEquivalent: "e")
         copyOutItem.keyEquivalentModifierMask = [.command]

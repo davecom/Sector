@@ -557,7 +557,7 @@ class VolumeDataViewController: NSViewController {
         updateDetailLabels(with: selectedNode)
     }
     
-    @objc func exportSelectedItem(_ sender: Any?) {
+    @objc @IBAction func exportSelectedItem(_ sender: Any?) {
         guard let selectedNode else {
             NSSound.beep()
             return
@@ -607,7 +607,7 @@ class VolumeDataViewController: NSViewController {
         }
     }
     
-    @objc func deleteSelectedItems(_ sender: Any?) {
+    @objc @IBAction func deleteSelectedItems(_ sender: Any?) {
         let selected = normalizedDeleteList(from: selectedNodesFromOutline())
         guard !selected.isEmpty, let volume else {
             NSSound.beep()
@@ -627,7 +627,7 @@ class VolumeDataViewController: NSViewController {
         }
     }
     
-    @objc func renameSelectedItem(_ sender: Any?) {
+    @objc @IBAction func renameSelectedItem(_ sender: Any?) {
         guard let selectedNode, let volume else {
             NSSound.beep()
             return
@@ -650,7 +650,7 @@ class VolumeDataViewController: NSViewController {
         transferMode = mode
     }
     
-    @objc func changeTypeCreatorSelectedItem(_ sender: Any?) {
+    @objc @IBAction func changeTypeCreatorSelectedItem(_ sender: Any?) {
         guard let selectedNode, let volume else {
             NSSound.beep()
             return
@@ -924,6 +924,32 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
     func outlineViewSelectionDidChange(_ notification: Notification) {
         handleOutlineSelectionChanged(nil)
     }
+    
+    func outlineView(_ outlineView: NSOutlineView,
+                         menuFor event: NSEvent,
+                         row: Int) -> NSMenu? {
+
+            guard row >= 0 else { return nil }
+
+            // Optionally sync selection to clicked row
+            if !outlineView.isRowSelected(row) {
+                outlineView.selectRowIndexes(IndexSet(integer: row),
+                                             byExtendingSelection: false)
+            }
+
+            // Use a menu from IB or build one here
+            let menu = NSMenu()
+            menu.addItem(withTitle: "Export…",
+                         action: #selector(exportSelectedItem(_:)),
+                         keyEquivalent: "")
+            menu.addItem(withTitle: "Delete",
+                         action: #selector(deleteSelectedItems(_:)),
+                         keyEquivalent: "")
+            // Important: let target be nil so it uses the responder chain
+            menu.items.forEach { $0.target = nil }
+
+            return menu
+        }
     
 }
 

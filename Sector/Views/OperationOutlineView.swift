@@ -32,4 +32,27 @@ public class OperationOutlineView: NSOutlineView {
         }
         super.keyDown(with: event)
     }
+    
+    public override func menu(for event: NSEvent) -> NSMenu? {
+        // Convert the click location into our coordinate system
+        let pointInView = convert(event.locationInWindow, from: nil)
+        let row = self.row(at: pointInView)
+
+        // If the click wasn't on a valid row, no context menu
+        guard row >= 0 else {
+            return nil
+        }
+
+        // Sync selection to the row that was right-clicked
+        if !isRowSelected(row) {
+            selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            // This will fire outlineViewSelectionDidChange in your VC,
+            // which should update `selectedNode`, so your
+            // validateUserInterfaceItem(_:) logic works.
+        }
+
+        // Use whatever menu is configured (IB “Menu” outlet or programmatically)
+        // and let the responder chain handle validation via your VC.
+        return super.menu(for: event)
+    }
 }

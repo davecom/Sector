@@ -393,7 +393,7 @@
                                                 <action selector="emailSupportWithSender:" target="Voe-Tx-rLC" id="3HG-4v-oZP"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Tweet Support" image="person.line.dotted.person" catalog="system" id="7eF-JS-c1g">
+                                        <menuItem title="Tweet Support" image="network" catalog="system" id="7eF-JS-c1g">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="tweetSupportWithSender:" target="Voe-Tx-rLC" id="gZj-b6-kve"/>
@@ -927,6 +927,9 @@
                                                     </prototypeCellViews>
                                                 </tableColumn>
                                             </tableColumns>
+                                            <connections>
+                                                <outlet property="menu" destination="xRz-bm-OSl" id="TbU-Uf-OzL"/>
+                                            </connections>
                                         </outlineView>
                                     </subviews>
                                 </clipView>
@@ -1189,6 +1192,34 @@
                     </connections>
                 </viewController>
                 <customObject id="SsC-PN-RBe" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+                <menu id="xRz-bm-OSl">
+                    <items>
+                        <menuItem title="Export" id="6bp-VU-Zdd">
+                            <modifierMask key="keyEquivalentModifierMask"/>
+                            <connections>
+                                <action selector="exportSelectedItem:" target="ATn-aY-3qV" id="PQj-AI-DRq"/>
+                            </connections>
+                        </menuItem>
+                        <menuItem title="Rename" id="mtp-Og-Q5v">
+                            <modifierMask key="keyEquivalentModifierMask"/>
+                            <connections>
+                                <action selector="renameSelectedItem:" target="ATn-aY-3qV" id="3Mx-zM-zUp"/>
+                            </connections>
+                        </menuItem>
+                        <menuItem title="Set Type/Creator" id="RJQ-tA-XPa">
+                            <modifierMask key="keyEquivalentModifierMask"/>
+                            <connections>
+                                <action selector="changeTypeCreatorSelectedItem:" target="ATn-aY-3qV" id="4qL-sx-IZb"/>
+                            </connections>
+                        </menuItem>
+                        <menuItem title="Delete" id="JVK-yc-bgb">
+                            <modifierMask key="keyEquivalentModifierMask"/>
+                            <connections>
+                                <action selector="deleteSelectedItems:" target="ATn-aY-3qV" id="d2m-V6-2UT"/>
+                            </connections>
+                        </menuItem>
+                    </items>
+                </menu>
             </objects>
             <point key="canvasLocation" x="2245" y="475"/>
         </scene>
@@ -1286,7 +1317,7 @@
     <resources>
         <image name="Floppy-disk" width="1052.362548828125" height="744.09375"/>
         <image name="mail" catalog="system" width="18" height="14"/>
-        <image name="person.line.dotted.person" catalog="system" width="26" height="13"/>
+        <image name="network" catalog="system" width="15" height="15"/>
         <namedColor name="AccentColor">
             <color red="0.0" green="0.46000000000000002" blue="0.89000000000000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
