@@ -537,6 +537,7 @@ class VolumeDataViewController: NSViewController {
         outlineView.delegate = self
         outlineView.target = self
         outlineView.action = #selector(handleOutlineSelectionChanged(_:))
+        outlineView.doubleAction = #selector(handleOutlineDoubleClick(_:))
         outlineView.actionDelegate = self
         
         outlineView.registerForDraggedTypes([.fileURL])
@@ -555,6 +556,27 @@ class VolumeDataViewController: NSViewController {
             selectedNode = nil
         }
         updateDetailLabels(with: selectedNode)
+    }
+    
+    @objc private func handleOutlineDoubleClick(_ sender: Any?) {
+        let row = outlineView.clickedRow >= 0 ? outlineView.clickedRow : outlineView.selectedRow
+        guard row >= 0, let node = outlineView.item(atRow: row) as? HFSNode else { return }
+        
+        if !outlineView.isRowSelected(row) {
+            outlineView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            handleOutlineSelectionChanged(outlineView)
+        }
+        
+        if node.info.isDirectory {
+            if outlineView.isItemExpanded(node) {
+                outlineView.collapseItem(node)
+            } else {
+                ensureChildrenLoaded(for: node)
+                outlineView.expandItem(node)
+            }
+        } else {
+            exportSelectedItem(sender)
+        }
     }
     
     @objc @IBAction func exportSelectedItem(_ sender: Any?) {
