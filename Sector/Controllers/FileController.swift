@@ -91,6 +91,7 @@ class FileController {
         let vwc: VolumeWindowController = NSStoryboard(name: "Main", bundle: nil).instantiateController(withIdentifier: "volumeWindowController") as! VolumeWindowController
         vwc.volume = volume
         vwc.displayName = displayName
+        
         vwc.configureUI()
         vwc.showWindow(self)
         
@@ -150,6 +151,7 @@ class FileController {
             }
             
             let volume = try openVolume(at: url, partitionCandidates: partitionCandidates)
+            NSDocumentController.shared.noteNewRecentDocumentURL(url)
             let displayName = url.deletingPathExtension().lastPathComponent
             OperationQueue.main.addOperation {
                 self.handleVolume(volume, displayName: displayName)

@@ -606,6 +606,51 @@ class VolumeDataViewController: NSViewController {
         }
     }
     
+    @objc @IBAction func newFolder(_ sender: Any?) {
+        let alert = NSAlert()
+        alert.messageText = "Create a New Folder"
+        alert.informativeText = "Enter a folder name:"
+        alert.addButton(withTitle: "Create")
+        alert.addButton(withTitle: "Cancel")
+        
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        textField.stringValue = ""
+        alert.accessoryView = textField
+        
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let value = textField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty, !value.contains(":") else {
+            // show error that it's empty or has colon
+            NSSound.beep()
+            // present the error dialog
+            presentErrorAlert(message: "Folder names cannot be blank and cannot contain colons.", informativeText: "Please try again.", title: "Invalid Name")
+            return
+        }
+        
+        // Create the new folder in the currently selected directory (or root if none)
+        let parentPath: String
+        if let node = self.selectedNode {
+            parentPath = node.info.isDirectory ? node.info.path : parentHFSPath(of: node.info.path)
+        } else {
+            parentPath = ":"
+        }
+        let newFolderPath = joinHFSPath(parentPath, value)
+        
+        do {
+            if let volume = self.volume {
+                try volume.makeDirectory(path: newFolderPath)
+                // Refresh UI to reflect the new folder
+                clearNodeCache(forDirectoryPath: parentPath)
+                outlineView.reloadData()
+                refreshVolumeInfoDisplay()
+            } else {
+                NSSound.beep()
+            }
+        } catch {
+            presentErrorAlert(for: error)
+        }
+    }
+    
     @objc func importItems(_ sender: Any?) {
         let panel = NSOpenPanel()
         panel.title = "Import Into Volume"
@@ -642,6 +687,7 @@ class VolumeDataViewController: NSViewController {
             for node in selected {
                 try volume.delete(node.info)
             }
+            self.selectedNode = nil // unselect
             resetTreeAndReload()
             refreshVolumeInfoDisplay()
         } catch {
@@ -980,3 +1026,4 @@ extension VolumeDataViewController: OutlineActionDelegate {
         deleteSelectedItems(nil)
     }
 }
+

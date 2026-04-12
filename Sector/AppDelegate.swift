@@ -173,6 +173,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let volumeMenu = NSMenu(title: "Volume")
         volumeMenuItem.submenu = volumeMenu
         
+        let nfItem = NSMenuItem(title: "New Folder",
+                                    action: #selector(VolumeDataViewController.newFolder(_:)),
+                                    keyEquivalent: "n")
+        nfItem.keyEquivalentModifierMask = [.command, .shift]
+        nfItem.target = nil
+        
         let copyInItem = NSMenuItem(title: "Import",
                                     action: #selector(VolumeDataViewController.importItems(_:)),
                                     keyEquivalent: "i")
@@ -214,6 +220,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         volumeMenu.addItem(renameItem)
         volumeMenu.addItem(typeCreatorItem)
         volumeMenu.addItem(setBlessedFolderItem)
+        volumeMenu.addItem(nfItem)
         volumeMenu.addItem(deleteItem)
         
         let insertIndex = mainMenu.items.firstIndex { $0.title == "Window" } ?? mainMenu.numberOfItems

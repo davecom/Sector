@@ -28,6 +28,7 @@ class VolumeWindowController: NSWindowController {
     
     private enum ToolbarIdentifiers {
         static let toolbar = NSToolbar.Identifier("SectorVolumeToolbar")
+        static let newFolderItem = NSToolbarItem.Identifier("SectorToolbarNewFolder")
         static let importItem = NSToolbarItem.Identifier("SectorToolbarImport")
         static let exportItem = NSToolbarItem.Identifier("SectorToolbarExport")
         static let transferModeItem = NSToolbarItem.Identifier("SectorToolbarTransferMode")
@@ -118,6 +119,7 @@ extension VolumeWindowController: NSToolbarDelegate {
             ToolbarIdentifiers.transferModeItem,
             ToolbarIdentifiers.renameItem,
             ToolbarIdentifiers.typeCreatorItem,
+            ToolbarIdentifiers.newFolderItem,
             ToolbarIdentifiers.deleteItem,
             .flexibleSpace
         ]
@@ -130,6 +132,7 @@ extension VolumeWindowController: NSToolbarDelegate {
             ToolbarIdentifiers.transferModeItem,
             ToolbarIdentifiers.renameItem,
             ToolbarIdentifiers.typeCreatorItem,
+            ToolbarIdentifiers.newFolderItem,
             ToolbarIdentifiers.deleteItem,
             .flexibleSpace
         ]
@@ -139,6 +142,16 @@ extension VolumeWindowController: NSToolbarDelegate {
                  itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
                  willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
         switch itemIdentifier {
+        case ToolbarIdentifiers.newFolderItem:
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.label = "New Folder"
+            item.paletteLabel = "New Folder"
+            item.toolTip = "Create a new folder in the volume"
+            item.image = NSImage(systemSymbolName: "folder.badge.plus", accessibilityDescription: nil)
+            item.target = nil
+            item.action = #selector(VolumeDataViewController.newFolder(_:))
+            return item
+            
         case ToolbarIdentifiers.importItem:
             let item = NSToolbarItem(itemIdentifier: itemIdentifier)
             item.label = "Import"
