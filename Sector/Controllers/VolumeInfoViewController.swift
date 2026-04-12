@@ -30,6 +30,7 @@ class VolumeInfoViewController: NSViewController {
     @IBOutlet weak var foldersCountValueLabel: NSTextField!
     @IBOutlet weak var allocationBlockSizeValueLabel: NSTextField!
     @IBOutlet weak var clumpSizeValueLabel: NSTextField!
+    @IBOutlet weak var createdDateValueLabel: NSTextField!
     @IBOutlet weak var modifiedDateValueLabel: NSTextField!
     @IBOutlet weak var backupDateValueLabel: NSTextField!
     @IBOutlet weak var flagsValueLabel: NSTextField!
@@ -70,8 +71,13 @@ class VolumeInfoViewController: NSViewController {
                 foldersCountValueLabel.stringValue = "\(volumeInfo.numberOfDirectories)"
                 allocationBlockSizeValueLabel.stringValue = formatBytes(UInt64(volumeInfo.allocationBlockSize))
                 clumpSizeValueLabel.stringValue = formatBytes(UInt64(volumeInfo.clumpSize))
+                createdDateValueLabel.stringValue = formatDate(volumeInfo.created)
                 modifiedDateValueLabel.stringValue = formatDate(volumeInfo.modified)
-                backupDateValueLabel.stringValue = formatDate(volumeInfo.backup)
+                if volumeInfo.backup < Date(timeIntervalSince1970: 20){
+                    backupDateValueLabel.stringValue = "-"
+                } else {
+                    backupDateValueLabel.stringValue = formatDate(volumeInfo.backup)
+                }
                 flagsValueLabel.stringValue = String(format: "0x%08X", volumeInfo.flags)
                 blessedFolderValueLabel.stringValue = "\(volumeInfo.blessedFolderId)"
             } else {

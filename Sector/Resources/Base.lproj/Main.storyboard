@@ -505,13 +505,13 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="21" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AaS-d6-Iqr">
-                                <rect key="frame" x="65" y="29" width="90" height="194"/>
+                                <rect key="frame" x="65" y="20" width="90" height="212"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="vertical" alignment="trailing" spacing="4" verticalStackHuggingPriority="249.99998474121094" horizontalClippingResistancePriority="999" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Uh-ou-xEi">
-                                        <rect key="frame" x="0.0" y="0.0" width="63" height="194"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="63" height="212"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="749" translatesAutoresizingMaskIntoConstraints="NO" id="SVY-2R-r3s">
-                                                <rect key="frame" x="32" y="180" width="33" height="14"/>
+                                                <rect key="frame" x="32" y="198" width="33" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Total:" id="OYW-jI-x8r">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -519,7 +519,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="76U-WO-7EF">
-                                                <rect key="frame" x="30" y="162" width="35" height="14"/>
+                                                <rect key="frame" x="30" y="180" width="35" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Used:" id="XnA-TD-v2L">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -527,7 +527,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="esX-9M-DGA">
-                                                <rect key="frame" x="34" y="144" width="31" height="14"/>
+                                                <rect key="frame" x="34" y="162" width="31" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Free:" id="4Rz-k7-0bB">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -535,7 +535,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6Sg-rm-6UF">
-                                                <rect key="frame" x="33" y="126" width="32" height="14"/>
+                                                <rect key="frame" x="33" y="144" width="32" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Files:" id="Hhu-7q-XAU">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -543,7 +543,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4qL-DA-sRA">
-                                                <rect key="frame" x="18" y="108" width="47" height="14"/>
+                                                <rect key="frame" x="18" y="126" width="47" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Folders:" id="KVT-fJ-8Em">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -551,7 +551,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Nfb-7X-cs4">
-                                                <rect key="frame" x="3" y="90" width="62" height="14"/>
+                                                <rect key="frame" x="3" y="108" width="62" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Block Size:" id="qR5-3p-Yo6">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
@@ -559,8 +559,16 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="OVj-zu-fnl">
-                                                <rect key="frame" x="-2" y="72" width="67" height="14"/>
+                                                <rect key="frame" x="-2" y="90" width="67" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Clump Size:" id="Fvs-Wx-i5U">
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                    <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DL8-CK-9zz">
+                                                <rect key="frame" x="16" y="72" width="49" height="14"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Created:" id="Bef-Uk-nGV">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -611,8 +619,10 @@
                                             <integer value="1000"/>
                                             <integer value="1000"/>
                                             <integer value="1000"/>
+                                            <integer value="1000"/>
                                         </visibilityPriorities>
                                         <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
@@ -627,10 +637,10 @@
                                         </customSpacing>
                                     </stackView>
                                     <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="251" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaA-FM-PiP">
-                                        <rect key="frame" x="84" y="0.0" width="6" height="194"/>
+                                        <rect key="frame" x="84" y="0.0" width="6" height="212"/>
                                         <subviews>
                                             <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="751" translatesAutoresizingMaskIntoConstraints="NO" id="czf-7G-gcO">
-                                                <rect key="frame" x="-2" y="180" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="198" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="E0G-uM-urN">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -638,7 +648,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="i3a-cv-oJu">
-                                                <rect key="frame" x="-2" y="162" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="180" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="xgf-4l-Ed3">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -646,7 +656,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qzI-gb-86H">
-                                                <rect key="frame" x="-2" y="144" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="162" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="j5M-lr-Qza">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -654,7 +664,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kji-UQ-ynh">
-                                                <rect key="frame" x="-2" y="126" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="144" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="pr8-AE-98X">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -662,7 +672,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="akT-dV-n9n">
-                                                <rect key="frame" x="-2" y="108" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="126" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="0SM-S9-Wrq">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -670,7 +680,7 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1nN-vA-dhY">
-                                                <rect key="frame" x="-2" y="90" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="108" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="wNm-Pk-K5f">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -678,8 +688,16 @@
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="5dF-AR-7Xw">
-                                                <rect key="frame" x="-2" y="72" width="10" height="14"/>
+                                                <rect key="frame" x="-2" y="90" width="10" height="14"/>
                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="oOa-Ww-6tw">
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LVK-Xt-VZv">
+                                                <rect key="frame" x="-2" y="72" width="10" height="14"/>
+                                                <textFieldCell key="cell" lineBreakMode="truncatingTail" title="-" id="mPc-WX-M2A">
                                                     <font key="font" metaFont="smallSystem"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -730,8 +748,10 @@
                                             <integer value="1000"/>
                                             <integer value="1000"/>
                                             <integer value="1000"/>
+                                            <integer value="1000"/>
                                         </visibilityPriorities>
                                         <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
@@ -768,6 +788,7 @@
                         <outlet property="backupDateValueLabel" destination="2Wa-KI-VRk" id="IPo-2p-be7"/>
                         <outlet property="blessedFolderValueLabel" destination="mcc-ux-mPp" id="Y2z-7C-mAe"/>
                         <outlet property="clumpSizeValueLabel" destination="5dF-AR-7Xw" id="Mop-bO-h9S"/>
+                        <outlet property="createdDateValueLabel" destination="LVK-Xt-VZv" id="63l-4G-rSC"/>
                         <outlet property="filesCountValueLabel" destination="kji-UQ-ynh" id="aSl-Pz-hBL"/>
                         <outlet property="flagsValueLabel" destination="Lke-VW-xun" id="odn-Lu-I8X"/>
                         <outlet property="foldersCountValueLabel" destination="akT-dV-n9n" id="oMc-Bh-A9p"/>
