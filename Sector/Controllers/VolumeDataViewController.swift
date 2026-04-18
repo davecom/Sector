@@ -108,6 +108,7 @@ class VolumeDataViewController: NSViewController {
         static let name = NSUserInterfaceItemIdentifier("name")
         static let size = NSUserInterfaceItemIdentifier("size")
         static let modified = NSUserInterfaceItemIdentifier("modified")
+        static let fileType = NSUserInterfaceItemIdentifier("fileType")
     }
 
     private func joinHFSPath(_ base: String, _ name: String) -> String {
@@ -963,6 +964,8 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
             identifier = NSUserInterfaceItemIdentifier("HFSSizeCell")
         } else if columnID == ColumnID.modified {
             identifier = NSUserInterfaceItemIdentifier("HFSModifiedCell")
+        } else if columnID == ColumnID.fileType {
+            identifier = NSUserInterfaceItemIdentifier("HFSFileTypeCell")
         } else {
             return nil
         }
@@ -976,6 +979,16 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
             cell.textField?.stringValue = node.info.isDirectory ? "-" : sizeString(for: node.info)
         } else if columnID == ColumnID.modified {
             cell.textField?.stringValue = tableModifiedString(for: node.info)
+        } else if columnID == ColumnID.fileType {
+            if node.info.isDirectory {
+                cell.textField?.stringValue = ""
+            } else {
+                if let fileTypeName: String = typeCreatorName(type: node.info.fileType, creator: node.info.fileCreator) {
+                    cell.textField?.stringValue = fileTypeName
+                } else {
+                    cell.textField?.stringValue = ""
+                }
+            }
         }
         
         return cell
