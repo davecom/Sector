@@ -20,6 +20,7 @@ import Cocoa
 
 public protocol OutlineActionDelegate: AnyObject {
     func outlineDeleteBackward()
+    func outlinePreview()
 }
 
 public class OperationOutlineView: NSOutlineView {
@@ -28,6 +29,9 @@ public class OperationOutlineView: NSOutlineView {
     public override func keyDown(with event: NSEvent) {
         if event.keyCode == 51 || event.keyCode == 117 {
             actionDelegate?.outlineDeleteBackward()
+            return
+        } else if event.keyCode == 49 {
+            actionDelegate?.outlinePreview()
             return
         }
         super.keyDown(with: event)

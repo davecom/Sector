@@ -80,6 +80,7 @@ class VolumeDataViewController: NSViewController {
     private var selectedNode: HFSNode?
     private var currentInternalDragPaths: [String] = []
     private var typeCreatorDialogDelegate: FourCharacterCodeDelegate?
+    private var previewPopover: NSPopover?
     
     private static let byteFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -696,6 +697,54 @@ class VolumeDataViewController: NSViewController {
         }
     }
     
+    @objc @IBAction func previewSelectedItem(_ sender: Any?) {
+        guard let selectedNode, let volume, !selectedNode.info.isDirectory else {
+            NSSound.beep()
+            return
+        }
+
+        do {
+            let previewController = try makePreviewController()
+            previewController.populate(
+                dataFork: try volume.readDataFork(selectedNode.info),
+                resourceFork: try volume.readResourceFork(selectedNode.info)
+            )
+
+            let popover = NSPopover()
+            popover.behavior = .semitransient
+            popover.contentViewController = previewController
+            previewPopover?.performClose(nil)
+            previewPopover = popover
+
+            let row = outlineView.selectedRow
+            if row >= 0 {
+                popover.show(
+                    relativeTo: outlineView.frameOfCell(atColumn: 0, row: row),
+                    of: outlineView,
+                    preferredEdge: .maxX
+                )
+            } else {
+                popover.show(relativeTo: view.bounds, of: view, preferredEdge: .maxY)
+            }
+        } catch {
+            presentErrorAlert(for: error)
+        }
+    }
+
+    private func makePreviewController() throws -> PreviewSplitViewController {
+        let storyboard = NSStoryboard(name: "Main", bundle: nil)
+        guard let controller = storyboard.instantiateController(
+            withIdentifier: NSStoryboard.SceneIdentifier("previewSplitViewController")
+        ) as? PreviewSplitViewController else {
+            throw NSError(
+                domain: "Sector",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "The preview controller is missing from the storyboard."]
+            )
+        }
+        return controller
+    }
+    
     @objc @IBAction func renameSelectedItem(_ sender: Any?) {
         guard let selectedNode, let volume else {
             NSSound.beep()
@@ -1035,8 +1084,11 @@ extension VolumeDataViewController: NSOutlineViewDelegate {
 }
 
 extension VolumeDataViewController: OutlineActionDelegate {
+    func outlinePreview() {
+        previewSelectedItem(nil)
+    }
+    
     func outlineDeleteBackward() {
         deleteSelectedItems(nil)
     }
 }
-

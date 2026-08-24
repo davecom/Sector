@@ -35,6 +35,7 @@ class VolumeWindowController: NSWindowController {
         static let renameItem = NSToolbarItem.Identifier("SectorToolbarRename")
         static let typeCreatorItem = NSToolbarItem.Identifier("SectorToolbarTypeCreator")
         static let deleteItem = NSToolbarItem.Identifier("SectorToolbarDelete")
+        static let previewItem = NSToolbarItem.Identifier("SectorToolbarPreview")
     }
     
     private weak var transferModePopUpButton: NSPopUpButton?
@@ -114,6 +115,7 @@ extension VolumeWindowController: NSWindowDelegate {
 extension VolumeWindowController: NSToolbarDelegate {
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         return [
+            ToolbarIdentifiers.previewItem,
             ToolbarIdentifiers.importItem,
             ToolbarIdentifiers.exportItem,
             ToolbarIdentifiers.transferModeItem,
@@ -127,6 +129,7 @@ extension VolumeWindowController: NSToolbarDelegate {
     
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         return [
+            ToolbarIdentifiers.previewItem,
             ToolbarIdentifiers.importItem,
             ToolbarIdentifiers.exportItem,
             ToolbarIdentifiers.transferModeItem,
@@ -142,6 +145,16 @@ extension VolumeWindowController: NSToolbarDelegate {
                  itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
                  willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
         switch itemIdentifier {
+        case ToolbarIdentifiers.previewItem:
+            let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+            item.label = "Preview"
+            item.paletteLabel = "Preview"
+            item.toolTip = "Show the data and resource fork of the selected file"
+            item.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: nil)
+            item.target = nil
+            item.action = #selector(VolumeDataViewController.previewSelectedItem(_:))
+            return item
+        
         case ToolbarIdentifiers.newFolderItem:
             let item = NSToolbarItem(itemIdentifier: itemIdentifier)
             item.label = "New Folder"
